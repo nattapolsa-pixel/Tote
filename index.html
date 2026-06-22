@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=frontend/index.html">
+    <title>Tote Scanner</title>
+    <link rel="canonical" href="frontend/index.html">
+    <script>
+        (function () {
+            var suffix = 'frontend/index.html' + window.location.search + window.location.hash;
+
+            if (window.location.protocol === 'file:') {
+                window.location.replace(suffix);
+                return;
+            }
+
+            var path = window.location.pathname;
+            var lastSegment = path.substring(path.lastIndexOf('/') + 1);
+            var basePath = path.endsWith('/')
+                ? path
+                : (lastSegment.indexOf('.') >= 0 ? path.substring(0, path.lastIndexOf('/') + 1) : path + '/');
+
+            window.location.replace(window.location.origin + basePath + suffix);
+        }());
+    </script>
+</head>
+<body>
+    <p>Opening Tote Scanner...</p>
+    <p><a href="frontend/index.html">Open the scanner</a></p>
+</body>
+</html>
