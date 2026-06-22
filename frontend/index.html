@@ -151,6 +151,35 @@
                 zoom: 90%;
             }
         }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+
+            #shippingDocumentContent,
+            #shippingDocumentContent * {
+                visibility: visible !important;
+            }
+
+            #shippingDocumentContent {
+                position: absolute !important;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 0 !important;
+                color: #111827 !important;
+                background: #ffffff !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .print-break-inside-avoid {
+                break-inside: avoid;
+            }
+        }
     </style>
 </head>
 
@@ -229,6 +258,43 @@
                 <button onclick="confirmForceClose()"
                     class="flex-1 bg-red-600 text-white font-bold py-3 rounded-lg text-lg shadow">ยืนยันปิดงาน</button>
             </div>
+        </div>
+    </div>
+
+    <div id="shippingDocumentModal" class="hidden fixed inset-0 bg-gray-100 z-[120] flex-col">
+        <header class="no-print bg-gray-900 text-white p-3 shadow-md shrink-0">
+            <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <div class="text-[10px] text-gray-300 font-bold">เมนูเอกสาร</div>
+                    <h2 class="text-lg font-black truncate">เอกสารใบคุมส่งสินค้า</h2>
+                </div>
+                <button onclick="closeShippingDocument()"
+                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-bold text-sm shadow flex items-center gap-1 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                    ปิด
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 mt-3">
+                <select id="shippingDocumentBranchSelect" onchange="renderShippingDocument(this.value)"
+                    class="w-full text-gray-900 font-bold p-3 rounded-lg border border-gray-300 bg-white">
+                </select>
+                <button onclick="printShippingDocument()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-3 rounded-lg shadow flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 9V2h12v7m-9 8h6m-7 4h8a2 2 0 002-2v-5H6v5a2 2 0 002 2zm12-12H4a2 2 0 00-2 2v4h4v-3h12v3h4v-4a2 2 0 00-2-2z">
+                        </path>
+                    </svg>
+                    พิมพ์เอกสาร
+                </button>
+            </div>
+        </header>
+        <div class="flex-1 overflow-y-auto p-3 md:p-6 bg-gray-200">
+            <div id="shippingDocumentContent"
+                class="bg-white max-w-5xl mx-auto min-h-full p-4 md:p-8 shadow border border-gray-300"></div>
         </div>
     </div>
 
@@ -326,13 +392,24 @@
             <div><span class="text-xs text-blue-300 block">WAVE NO.</span>
                 <h1 id="branchWaveDisplay" class="text-xl font-bold text-yellow-300"></h1>
             </div>
-            <button onclick="exitWave()"
-                class="bg-red-600 text-sm px-4 py-2 rounded font-bold shadow flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg> ออก (Esc)
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="openShippingDocument()"
+                    class="bg-amber-500 hover:bg-amber-600 text-gray-900 text-xs md:text-sm px-3 py-2 rounded font-black shadow flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5l5 5v11a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    เอกสาร
+                </button>
+                <button onclick="exitWave()"
+                    class="bg-red-600 text-sm px-4 py-2 rounded font-bold shadow flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg> ออก
+                </button>
+            </div>
         </header>
         <div class="p-3 md:p-4 flex-1 overflow-y-auto" style="-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;">
             <h2 class="text-lg font-bold text-gray-800 mb-3 text-center">กรุณาเลือกสาขาที่ต้องการปฏิบัติงาน</h2>
@@ -355,6 +432,15 @@
                     </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
+                    <button onclick="openShippingDocument(selectedBranchCode)"
+                        class="bg-amber-500 hover:bg-amber-600 text-gray-900 text-xs md:text-sm px-3 py-2 rounded font-black shadow whitespace-nowrap flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5l5 5v11a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        เอกสาร
+                    </button>
                     <button onclick="backToBranchSelect()"
                         class="bg-blue-600 border border-blue-400 text-xs md:text-sm px-3 py-2 rounded font-bold shadow whitespace-nowrap flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -562,14 +648,25 @@
 
                 <div id="finishJobArea"
                     class="hidden shrink-0 p-4 bg-white border-t-2 border-green-200 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.1)]">
-                    <button onclick="finishBranchJob()"
-                        class="w-full bg-green-600 hover:bg-green-700 text-white font-black text-xl py-4 rounded-xl shadow-lg border-b-4 border-green-800 animate-pulse transition flex items-center justify-center gap-2">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        ปิดจบงานสาขานี้ (พิมพ์สรุป)
-                    </button>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="openShippingDocument(selectedBranchCode)"
+                            class="w-full bg-amber-500 hover:bg-amber-600 text-gray-900 font-black text-lg py-3 rounded-xl shadow border-b-4 border-amber-700 transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5l5 5v11a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            เอกสารใบคุมส่งสินค้า
+                        </button>
+                        <button onclick="finishBranchJob()"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-black text-xl py-4 rounded-xl shadow-lg border-b-4 border-green-800 animate-pulse transition flex items-center justify-center gap-2">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            ปิดจบงานสาขานี้
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -778,6 +875,239 @@
             }
         }
 
+        // ==================== SHIPPING CONTROL DOCUMENT ====================
+        function escapeDocumentText(value) {
+            return String(value === undefined || value === null ? '' : value).replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        function getExpectedQty(item) {
+            return parseInt(item.Total_Qty || item.total_qty) || 1;
+        }
+
+        function getActualQty(item) {
+            const qty = parseInt(item.qty);
+            return Number.isFinite(qty) && qty > 0 ? qty : getExpectedQty(item);
+        }
+
+        function getLpnType(item) {
+            const prefix = String(item.lpn || '').substring(0, 2).toUpperCase();
+            if (prefix === 'PR') return 'PR';
+            if (prefix === 'PP') return 'PP';
+            if (prefix === 'PT' || prefix === 'PN') return 'PT/PN';
+            return prefix || '-';
+        }
+
+        function getDocumentBranches() {
+            const branchMap = new Map();
+            allLpnsInWave.forEach(item => {
+                const code = item.branch || 'Unknown';
+                if (!branchMap.has(code)) branchMap.set(code, item.branch_name || 'ไม่ระบุ');
+            });
+            return Array.from(branchMap.entries())
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([code, name]) => ({ code, name }));
+        }
+
+        function getStatusBadge(item) {
+            if (item.status === 'Scanned') {
+                return '<span class="inline-flex px-2 py-1 rounded bg-green-100 text-green-800 font-bold">ตรวจแล้ว</span>';
+            }
+            if (item.status === 'ForceClosed') {
+                return '<span class="inline-flex px-2 py-1 rounded bg-gray-200 text-gray-700 font-bold">หาไม่พบ</span>';
+            }
+            return '<span class="inline-flex px-2 py-1 rounded bg-red-100 text-red-800 font-bold">ค้างตรวจสอบ</span>';
+        }
+
+        function getDocumentDetail(item, branchItems) {
+            if (item.isMaster) {
+                const children = branchItems.filter(child => child.combinedWith === item.lpn).map(child => child.lpn);
+                return `Master รวม ${children.length} รายการ${children.length ? ': ' + children.join(', ') : ''}`;
+            }
+            if (item.combinedWith) return `รวมอยู่ในพาเลท ${item.combinedWith}`;
+            if (item.scan_type) return item.scan_type;
+            return '-';
+        }
+
+        function openShippingDocument(preferredBranchCode = '') {
+            if (!currentWave || allLpnsInWave.length === 0) {
+                showAlert('ยังไม่มีข้อมูล Wave', 'กรุณาเลือก Wave ก่อนเปิดเอกสารใบคุมส่งสินค้า');
+                return;
+            }
+
+            const branches = getDocumentBranches();
+            const select = document.getElementById('shippingDocumentBranchSelect');
+            select.innerHTML = branches.map(branch =>
+                `<option value="${escapeDocumentText(branch.code)}">${escapeDocumentText(branch.code)} - ${escapeDocumentText(branch.name)}</option>`
+            ).join('');
+
+            const selectedBranch = branches.some(branch => branch.code === preferredBranchCode)
+                ? preferredBranchCode
+                : (branches[0] ? branches[0].code : '');
+            select.value = selectedBranch;
+
+            document.getElementById('shippingDocumentModal').classList.remove('hidden');
+            document.getElementById('shippingDocumentModal').classList.add('flex');
+            renderShippingDocument(selectedBranch);
+        }
+
+        function closeShippingDocument() {
+            document.getElementById('shippingDocumentModal').classList.add('hidden');
+            document.getElementById('shippingDocumentModal').classList.remove('flex');
+            if (selectedBranchCode && !document.getElementById('mainApp').classList.contains('hidden')) {
+                document.getElementById('lpnInput').focus();
+            }
+        }
+
+        function renderShippingDocument(branchCode) {
+            const content = document.getElementById('shippingDocumentContent');
+            const branchItems = allLpnsInWave.filter(item => (item.branch || 'Unknown') === branchCode);
+            if (branchItems.length === 0) {
+                content.innerHTML = '<div class="text-center font-bold text-gray-600 py-10">ไม่พบข้อมูลสาขานี้</div>';
+                return;
+            }
+
+            const branchName = branchItems[0].branch_name || 'ไม่ระบุ';
+            const generatedAt = new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+            const summary = branchItems.reduce((acc, item) => {
+                const expectedQty = getExpectedQty(item);
+                acc.totalExpected += expectedQty;
+                acc.totalLpn += 1;
+                if (item.status === 'Scanned') {
+                    const actualQty = getActualQty(item);
+                    acc.scannedQty += actualQty;
+                    acc.scannedLpn += 1;
+                    const type = getLpnType(item);
+                    if (type === 'PR') acc.pr += actualQty;
+                    else if (type === 'PT/PN') acc.ptpn += actualQty;
+                    else if (type === 'PP') acc.pp += actualQty;
+                } else if (item.status === 'ForceClosed') {
+                    acc.notFoundQty += expectedQty;
+                    acc.notFoundLpn += 1;
+                } else {
+                    acc.pendingQty += expectedQty;
+                    acc.pendingLpn += 1;
+                }
+                return acc;
+            }, { totalExpected: 0, totalLpn: 0, scannedQty: 0, scannedLpn: 0, pendingQty: 0, pendingLpn: 0, notFoundQty: 0, notFoundLpn: 0, pr: 0, ptpn: 0, pp: 0 });
+
+            const rows = branchItems.map((item, index) => {
+                const expectedQty = getExpectedQty(item);
+                const qtyDisplay = item.status === 'ForceClosed' ? '0' : getActualQty(item);
+                const detail = getDocumentDetail(item, branchItems);
+                return `
+                    <tr class="border-b border-gray-200 print-break-inside-avoid">
+                        <td class="p-2 text-center">${index + 1}</td>
+                        <td class="p-2 font-bold tracking-wider">${escapeDocumentText(item.lpn)}</td>
+                        <td class="p-2 text-center">${escapeDocumentText(item.zone || '-')}</td>
+                        <td class="p-2 text-center">${escapeDocumentText(getLpnType(item))}</td>
+                        <td class="p-2 text-center">${getStatusBadge(item)}</td>
+                        <td class="p-2 text-center font-bold">${escapeDocumentText(qtyDisplay)} / ${escapeDocumentText(expectedQty)}</td>
+                        <td class="p-2 text-xs">${escapeDocumentText(detail)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const syncWarning = syncQueue.length > 0
+                ? `<div class="mt-3 p-3 border border-yellow-300 bg-yellow-50 text-yellow-800 font-bold rounded">ยังมีรายการรอส่ง ${syncQueue.length} รายการ เอกสารนี้อ้างอิงข้อมูลบนหน้าจอปัจจุบัน</div>`
+                : '';
+
+            content.innerHTML = `
+                <div class="flex items-start justify-between gap-4 border-b-4 border-gray-900 pb-4">
+                    <div>
+                        <div class="text-sm font-bold text-gray-500">Pro LPN Scanner</div>
+                        <h1 class="text-2xl md:text-3xl font-black text-gray-900">เอกสารใบคุมส่งสินค้า</h1>
+                    </div>
+                    <div class="text-right text-sm">
+                        <div class="font-bold">วันที่พิมพ์</div>
+                        <div>${escapeDocumentText(generatedAt)}</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm">
+                    <div class="border border-gray-300 p-3 rounded">
+                        <div class="text-gray-500 font-bold">Wave No.</div>
+                        <div class="text-xl font-black">${escapeDocumentText(currentWave)}</div>
+                    </div>
+                    <div class="border border-gray-300 p-3 rounded">
+                        <div class="text-gray-500 font-bold">สาขา</div>
+                        <div class="text-xl font-black">${escapeDocumentText(branchCode)} - ${escapeDocumentText(branchName)}</div>
+                    </div>
+                    <div class="border border-gray-300 p-3 rounded">
+                        <div class="text-gray-500 font-bold">ผู้ปฏิบัติงาน</div>
+                        <div class="font-black">${escapeDocumentText(loggedInEmpId || '-')} ${loggedInEmpName ? '(' + escapeDocumentText(loggedInEmpName) + ')' : ''}</div>
+                    </div>
+                    <div class="border border-gray-300 p-3 rounded">
+                        <div class="text-gray-500 font-bold">สถานะเอกสาร</div>
+                        <div class="font-black">${summary.pendingLpn === 0 ? 'พร้อมปิดงาน' : 'ยังมีรายการค้างตรวจสอบ'}</div>
+                    </div>
+                </div>
+
+                ${syncWarning}
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                    <div class="bg-gray-100 p-3 rounded border border-gray-300">
+                        <div class="text-xs text-gray-500 font-bold">จำนวนทั้งหมด</div>
+                        <div class="text-2xl font-black">${summary.totalExpected}</div>
+                        <div class="text-xs text-gray-500">${summary.totalLpn} LPN</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded border border-green-200">
+                        <div class="text-xs text-green-700 font-bold">ตรวจแล้ว</div>
+                        <div class="text-2xl font-black text-green-800">${summary.scannedQty}</div>
+                        <div class="text-xs text-green-700">${summary.scannedLpn} LPN</div>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded border border-red-200">
+                        <div class="text-xs text-red-700 font-bold">ค้างตรวจสอบ</div>
+                        <div class="text-2xl font-black text-red-800">${summary.pendingQty}</div>
+                        <div class="text-xs text-red-700">${summary.pendingLpn} LPN</div>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded border border-gray-300">
+                        <div class="text-xs text-gray-600 font-bold">หาไม่พบ</div>
+                        <div class="text-2xl font-black text-gray-800">${summary.notFoundQty}</div>
+                        <div class="text-xs text-gray-600">${summary.notFoundLpn} LPN</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mt-3 text-sm">
+                    <div class="border border-red-200 bg-red-50 p-2 rounded font-bold text-red-800">PR: ${summary.pr}</div>
+                    <div class="border border-blue-200 bg-blue-50 p-2 rounded font-bold text-blue-800">PT/PN: ${summary.ptpn}</div>
+                    <div class="border border-orange-200 bg-orange-50 p-2 rounded font-bold text-orange-800">PP: ${summary.pp}</div>
+                </div>
+
+                <div class="mt-5 overflow-x-auto">
+                    <table class="w-full text-left text-sm border border-gray-300 border-collapse">
+                        <thead class="bg-gray-900 text-white">
+                            <tr>
+                                <th class="p-2 text-center w-12">#</th>
+                                <th class="p-2">LPN</th>
+                                <th class="p-2 text-center">Zone</th>
+                                <th class="p-2 text-center">ประเภท</th>
+                                <th class="p-2 text-center">สถานะ</th>
+                                <th class="p-2 text-center">จำนวน</th>
+                                <th class="p-2">รายละเอียด</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10 text-center text-sm print-break-inside-avoid">
+                    <div class="pt-10 border-t border-gray-500">ผู้จัดสินค้า / ผู้ตรวจสอบ</div>
+                    <div class="pt-10 border-t border-gray-500">หัวหน้างาน</div>
+                    <div class="pt-10 border-t border-gray-500">ผู้รับสินค้า</div>
+                </div>
+            `;
+        }
+
+        function printShippingDocument() {
+            window.print();
+        }
+
         // ==================== UI Helper ====================
         window.onload = () => {
             document.getElementById('empInput').focus();
@@ -829,6 +1159,7 @@
             if (e.key === 'Escape' || e.key === 'Esc') {
                 e.preventDefault();
                 if (isAlertOpen) closeAlert();
+                else if (!document.getElementById('shippingDocumentModal').classList.contains('hidden')) closeShippingDocument();
                 else if (!document.getElementById('scannerModal').classList.contains('hidden')) closeScanner();
                 else if (!document.getElementById('confirmModal').classList.contains('hidden')) closeConfirm();
                 else if (!document.getElementById('colorSelectionArea').classList.contains('hidden') || !document.getElementById('qtySelectionArea').classList.contains('hidden')) {
@@ -836,6 +1167,7 @@
                 } else if (selectedBranchCode !== "") backToBranchSelect(); else if (currentWave !== "") exitWave();
             }
             if (e.key === 'Enter' && isAlertOpen) { e.preventDefault(); closeAlert(); }
+            if (!document.getElementById('shippingDocumentModal').classList.contains('hidden')) return;
 
             // 💡 ระบบ Shortcut กดปุ่มตัวเลข 1-6 เพื่อเลือกสีสำหรับ Handheld
             if (e.key >= '1' && e.key <= '6' && !isAlertOpen) {
