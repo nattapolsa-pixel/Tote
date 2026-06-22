@@ -65,7 +65,8 @@ async def check_wave(wave_no: str):
                 SAFE_CAST(Wave_Number AS INT64) AS Wave_ID,
                 TRIM(UPPER(LPN)) AS Clean_LPN,
                 MAX(Qty) AS Scanned_Qty,
-                MAX(Scan_Type) AS Scan_Type 
+                MAX(Scan_Type) AS Scan_Type,
+                MAX(Color) AS Color
             FROM `pro-analytics-db.logistics_db.app_scan_transactions`
             WHERE Wave_Number IS NOT NULL
             GROUP BY 1, 2
@@ -79,7 +80,9 @@ async def check_wave(wave_no: str):
             MAX(IFNULL(d.Total_Qty, 1)) AS Total_Qty, 
             IF(MAX(s.Clean_LPN) IS NOT NULL, 'Scanned', 'Pending') AS status,
             MAX(s.Scanned_Qty) AS qty,
-            MAX(s.Scan_Type) AS scan_type
+            MAX(s.Scan_Type) AS scan_type,
+            COALESCE(MAX(TRIM(CAST(d.Owner AS STRING))), 'Unknown') AS owner,
+            MAX(s.Color) AS color
         FROM `pro-analytics-db.logistics_db.wave_lpn_detail_record` AS d
         LEFT JOIN `pro-analytics-db.logistics_db.wave_monitoring` AS m 
           ON TRIM(CAST(d.Branch_Code AS STRING)) = TRIM(CAST(m.Branch_Code AS STRING))
@@ -90,7 +93,24 @@ async def check_wave(wave_no: str):
         GROUP BY d.LPN, d.Zone, d.Branch_Code, d.Wave_Number
     """
 
+    meta_query = f"""
+        SELECT 
+            COALESCE(MAX(TRIM(CAST(Vehicle_Booking_No AS STRING))), '') AS booking_no,
+            COALESCE(MAX(TRIM(CAST(License_Plate AS STRING))), '') AS license_plate
+        FROM `pro-analytics-db.logistics_db.wave_monitoring`
+        WHERE SAFE_CAST(REGEXP_REPLACE(Wave_Number, r'[^0-9]', '') AS INT64) = {search_wave_id}
+    """
+
     try:
+        # Load wave metadata
+        meta_job = client.query(meta_query)
+        meta_rows = list(meta_job.result())
+        booking_no = ""
+        license_plate = ""
+        if len(meta_rows) > 0:
+            booking_no = meta_rows[0]["booking_no"] or ""
+            license_plate = meta_rows[0]["license_plate"] or ""
+
         query_job = client.query(query)
         results = query_job.result()
 
@@ -115,7 +135,9 @@ async def check_wave(wave_no: str):
                 "status": row["status"],
                 "total_qty": row["Total_Qty"],
                 "qty": row["qty"] if row["qty"] is not None else 0,
-                "scan_type": row["scan_type"]
+                "scan_type": row["scan_type"],
+                "owner": row["owner"] or "Unknown",
+                "color": row["color"] or "None"
             })
 
             if z not in zones_calc:
@@ -129,6 +151,8 @@ async def check_wave(wave_no: str):
 
         return {
             "wave_no": real_wave_no,
+            "booking_no": booking_no,
+            "license_plate": license_plate,
             "lpn_list": lpn_list,
             "zone_summary": list(zones_calc.values())
         }

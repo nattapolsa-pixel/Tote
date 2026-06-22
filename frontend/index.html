@@ -800,6 +800,7 @@
         const employeeApiUrl = 'https://script.google.com/macros/s/AKfycbybmW6N7TxfsHqEa-Fx6ayy8M8xfjKGmTYO27izmbEoLJmQRrFD3i9c0XogP0fG6tlG/exec';
 
         let loggedInEmpId = ""; let loggedInEmpName = ""; let currentWave = ""; let allLpnsInWave = [];
+        let currentBookingNo = ""; let currentLicensePlate = "";
         let isAlertOpen = false; let selectedBranchCode = ""; let selectedBranchName = "";
         let employeeDB = JSON.parse(localStorage.getItem('proScannerEmpDB')) || {};
         let backgroundTasks = 0;
@@ -985,6 +986,19 @@
             }
         }
 
+        function getProvinceFromBranchName(name) {
+            if (!name) return '-';
+            const match = name.match(/\(([^)]+)\)/);
+            if (match) return match[1].trim();
+            
+            // Check for common provinces as fallback
+            const commonProvinces = ['กรุงเทพ', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'ชลบุรี', 'เชียงใหม่', 'นครราชสีมา', 'ขอนแก่น', 'สุราษฎร์ธานี', 'สงขลา', 'ภูเก็ต', 'ชะอำ', 'หัวหิน', 'ระยอง', 'อยุธยา', 'พิษณุโลก', 'ลำปาง', 'นครศรีธรรมราช', 'เชียงราย', 'ราชบุรี', 'กาญจนบุรี'];
+            for (let prov of commonProvinces) {
+                if (name.includes(prov)) return prov;
+            }
+            return '-';
+        }
+
         function renderShippingDocument() {
             const content = document.getElementById('shippingDocumentContent');
             const branches = getDocumentBranches();
@@ -993,148 +1007,188 @@
                 return;
             }
 
-            let htmlContent = '';
-            const generatedAt = new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+            const today = new Date();
+            const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
 
-            branches.forEach(branch => {
+            let totalM = 0;
+            let totalRed = 0;
+            let totalBlue = 0;
+            let totalGreen = 0;
+            let totalBlack = 0;
+            let totalYellow = 0;
+            let totalAllBoxes = 0;
+            let totalPallets = 0;
+
+            const rows = branches.map((branch, index) => {
                 const bCode = branch.code;
                 const branchItems = allLpnsInWave.filter(item => (item.branch || 'Unknown') === bCode);
-                if (branchItems.length === 0) return;
+                
+                // Get owner from the items (if any item has a valid owner)
+                let owner = 'Unknown';
+                const firstWithOwner = branchItems.find(item => item.owner && item.owner !== 'Unknown');
+                if (firstWithOwner) {
+                    owner = firstWithOwner.owner;
+                } else if (branchItems[0]) {
+                    owner = branchItems[0].owner || 'Unknown';
+                }
 
-                const branchName = branchItems[0].branch_name || 'ไม่ระบุ';
-                const summary = branchItems.reduce((acc, item) => {
-                    const expectedQty = getExpectedQty(item);
-                    acc.totalExpected += expectedQty;
-                    acc.totalLpn += 1;
+                // Sum quantities by category
+                let mCount = 0;
+                let redCount = 0;
+                let blueCount = 0;
+                let greenCount = 0;
+                let blackCount = 0;
+                let yellowCount = 0;
+                
+                const scannedMasters = new Set();
+                let standalonePallets = 0;
+
+                branchItems.forEach(item => {
                     if (item.status === 'Scanned') {
-                        const actualQty = getActualQty(item);
-                        acc.scannedQty += actualQty;
-                        acc.scannedLpn += 1;
-                        const type = getLpnType(item);
-                        if (type === 'PR') acc.pr += actualQty;
-                        else if (type === 'PT/PN') acc.ptpn += actualQty;
-                        else if (type === 'PP') acc.pp += actualQty;
-                    } else if (item.status === 'ForceClosed') {
-                        acc.notFoundQty += expectedQty;
-                        acc.notFoundLpn += 1;
-                    } else {
-                        acc.pendingQty += expectedQty;
-                        acc.pendingLpn += 1;
+                        const qty = getActualQty(item);
+                        const prefix = String(item.lpn || '').substring(0, 2).toUpperCase();
+                        const color = String(item.color || '').toUpperCase();
+                        const type = String(item.scan_type || '').toUpperCase();
+
+                        // Check if Carton or PR prefix
+                        if (prefix === 'PR' || type === 'CARTON' || color === 'REUSE') {
+                            mCount += qty;
+                        } else if (prefix === 'PP') {
+                            if (!item.combinedWith && !item.isMaster) {
+                                standalonePallets += qty;
+                            }
+                        } else {
+                            if (color === 'RED') redCount += qty;
+                            else if (color === 'BLUE') blueCount += qty;
+                            else if (color === 'GREEN') greenCount += qty;
+                            else if (color === 'BLACK') blackCount += qty;
+                            else if (color === 'YELLOW') yellowCount += qty;
+                            else {
+                                mCount += qty;
+                            }
+                        }
+
+                        if (item.combinedWith) {
+                            scannedMasters.add(item.combinedWith);
+                        }
+                        if (item.isMaster) {
+                            scannedMasters.add(item.lpn);
+                        }
                     }
-                    return acc;
-                }, { totalExpected: 0, totalLpn: 0, scannedQty: 0, scannedLpn: 0, pendingQty: 0, pendingLpn: 0, notFoundQty: 0, notFoundLpn: 0, pr: 0, ptpn: 0, pp: 0 });
+                });
 
-                const rows = branchItems.map((item, index) => {
-                    const expectedQty = getExpectedQty(item);
-                    const qtyDisplay = item.status === 'ForceClosed' ? '0' : getActualQty(item);
-                    const detail = getDocumentDetail(item, branchItems);
-                    return `
-                        <tr class="border-b border-gray-200 print-break-inside-avoid">
-                            <td class="p-2 text-center">${index + 1}</td>
-                            <td class="p-2 font-bold tracking-wider">${escapeDocumentText(item.lpn)}</td>
-                            <td class="p-2 text-center">${escapeDocumentText(item.zone || '-')}</td>
-                            <td class="p-2 text-center">${escapeDocumentText(getLpnType(item))}</td>
-                            <td class="p-2 text-center">${getStatusBadge(item)}</td>
-                            <td class="p-2 text-center font-bold">${escapeDocumentText(qtyDisplay)} / ${escapeDocumentText(expectedQty)}</td>
-                            <td class="p-2 text-xs">${escapeDocumentText(detail)}</td>
-                        </tr>
-                    `;
-                }).join('');
+                const branchTotalBoxes = mCount + redCount + blueCount + greenCount + blackCount + yellowCount;
+                const branchPallets = scannedMasters.size + standalonePallets;
 
-                const syncWarning = syncQueue.length > 0
-                    ? `<div class="mt-3 p-3 border border-yellow-300 bg-yellow-50 text-yellow-800 font-bold rounded no-print">ยังมีรายการรอส่ง ${syncQueue.length} รายการ เอกสารนี้อ้างอิงข้อมูลบนหน้าจอปัจจุบัน</div>`
-                    : '';
+                // Accumulate totals
+                totalM += mCount;
+                totalRed += redCount;
+                totalBlue += blueCount;
+                totalGreen += greenCount;
+                totalBlack += blackCount;
+                totalYellow += yellowCount;
+                totalAllBoxes += branchTotalBoxes;
+                totalPallets += branchPallets;
 
-                htmlContent += `
-                    <div class="branch-document-sheet bg-white p-4 md:p-8 shadow border border-gray-300 rounded-lg">
-                        <div class="flex items-start justify-between gap-4 border-b-4 border-gray-900 pb-4">
+                const cleanBranchName = branch.name.replace(/\s*\([^)]+\)\s*/g, '').trim();
+                const province = getProvinceFromBranchName(branch.name);
+
+                return `
+                    <tr style="text-align: center; color: #000;">
+                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${index + 1}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; font-family: sans-serif;">${escapeDocumentText(owner)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; font-family: sans-serif;">${escapeDocumentText(bCode)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; text-align: left; font-family: sans-serif;">${escapeDocumentText(cleanBranchName)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${escapeDocumentText(province)}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${mCount || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${redCount || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${blueCount || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${greenCount || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${blackCount || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${yellowCount || ''}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; font-family: sans-serif;">${branchTotalBoxes}</td>
+                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; font-family: sans-serif;">${branchPallets}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const totalRow = `
+                <tr style="text-align: center; font-weight: bold; background-color: #c0c0c0; color: #000;">
+                    <td colspan="5" style="border: 1px solid #000; padding: 6px; text-align: center; font-family: sans-serif;">รวมจำนวนกล่อง/พาเลท</td>
+                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalM}</td>
+                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalRed}</td>
+                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalBlue}</td>
+                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalGreen}</td>
+                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalBlack}</td>
+                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalYellow}</td>
+                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalAllBoxes}</td>
+                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalPallets}</td>
+                </tr>
+            `;
+
+            content.innerHTML = `
+                <div class="branch-document-sheet bg-white p-4 md:p-8 shadow border border-gray-300 rounded-lg flex flex-col gap-6" style="background-color: #ffffff;">
+                    <div class="text-center">
+                        <h1 class="text-xl md:text-2xl font-black text-gray-900 tracking-wide" style="font-family: sans-serif; color: #000; margin-bottom: 20px;">Transport Job (เอกสารใบรายการคุมส่งสินค้า)</h1>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; font-family: sans-serif; font-size: 14px; color: #000; margin-bottom: 12px; line-height: 1.6;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
                             <div>
-                                <div class="text-sm font-bold text-gray-500">Pro LPN Scanner</div>
-                                <h1 class="text-2xl md:text-3xl font-black text-gray-900">เอกสารใบคุมส่งสินค้า</h1>
+                                <span style="font-weight: bold; display: inline-block; width: 100px;">Booking :</span>
+                                <span style="font-weight: bold; display: inline-block; min-width: 120px;">${escapeDocumentText(currentBookingNo || 'B001-0000000')}</span>
+                                <span style="color: #ff0000; font-weight: normal; margin-left: 20px;">&lt;&lt; ข้อมูลจาก wave monitoring</span>
                             </div>
-                            <div class="text-right text-sm">
-                                <div class="font-bold">วันที่พิมพ์</div>
-                                <div>${escapeDocumentText(generatedAt)}</div>
+                            <div>
+                                <span style="font-weight: bold; display: inline-block; width: 100px;">Wave :</span>
+                                <span style="font-weight: bold; display: inline-block; min-width: 120px;">${escapeDocumentText(currentWave || '0000000000')}</span>
+                                <span style="color: #ff0000; font-weight: normal; margin-left: 20px;">&lt;&lt; ข้อมูลจาก wave monitoring</span>
                             </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm">
-                            <div class="border border-gray-300 p-3 rounded">
-                                <div class="text-gray-500 font-bold">Wave No.</div>
-                                <div class="text-xl font-black">${escapeDocumentText(currentWave)}</div>
-                            </div>
-                            <div class="border border-gray-300 p-3 rounded">
-                                <div class="text-gray-500 font-bold">สาขา</div>
-                                <div class="text-xl font-black">${escapeDocumentText(bCode)} - ${escapeDocumentText(branchName)}</div>
-                            </div>
-                            <div class="border border-gray-300 p-3 rounded">
-                                <div class="text-gray-500 font-bold">ผู้ปฏิบัติงาน</div>
-                                <div class="font-black">${escapeDocumentText(loggedInEmpId || '-')} ${loggedInEmpName ? '(' + escapeDocumentText(loggedInEmpName) + ')' : ''}</div>
-                            </div>
-                            <div class="border border-gray-300 p-3 rounded">
-                                <div class="text-gray-500 font-bold">สถานะเอกสาร</div>
-                                <div class="font-black">${summary.pendingLpn === 0 ? 'พร้อมปิดงาน' : 'ยังมีรายการค้างตรวจสอบ'}</div>
+                            <div>
+                                <span style="font-weight: bold; display: inline-block; width: 100px;">ทะเบียนรถ :</span>
+                                <span style="font-weight: bold; display: inline-block; min-width: 120px;">${escapeDocumentText(currentLicensePlate || '-')}</span>
+                                <span style="color: #ff0000; font-weight: normal; margin-left: 20px;">&lt;&lt; ข้อมูลจาก wave monitoring</span>
                             </div>
                         </div>
-
-                        ${syncWarning}
-
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-                            <div class="bg-gray-100 p-3 rounded border border-gray-300">
-                                <div class="text-xs text-gray-500 font-bold">จำนวนทั้งหมด</div>
-                                <div class="text-2xl font-black">${summary.totalExpected}</div>
-                                <div class="text-xs text-gray-500">${summary.totalLpn} LPN</div>
-                            </div>
-                            <div class="bg-green-50 p-3 rounded border border-green-200">
-                                <div class="text-xs text-green-700 font-bold">ตรวจแล้ว</div>
-                                <div class="text-2xl font-black text-green-800">${summary.scannedQty}</div>
-                                <div class="text-xs text-green-700">${summary.scannedLpn} LPN</div>
-                            </div>
-                            <div class="bg-red-50 p-3 rounded border border-red-200">
-                                <div class="text-xs text-red-700 font-bold">ค้างตรวจสอบ</div>
-                                <div class="text-2xl font-black text-red-800">${summary.pendingQty}</div>
-                                <div class="text-xs text-red-700">${summary.pendingLpn} LPN</div>
-                            </div>
-                            <div class="bg-gray-100 p-3 rounded border border-gray-300">
-                                <div class="text-xs text-gray-600 font-bold">หาไม่พบ</div>
-                                <div class="text-2xl font-black text-gray-800">${summary.notFoundQty}</div>
-                                <div class="text-xs text-gray-600">${summary.notFoundLpn} LPN</div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2 mt-3 text-sm">
-                            <div class="border border-red-200 bg-red-50 p-2 rounded font-bold text-red-800">PR: ${summary.pr}</div>
-                            <div class="border border-blue-200 bg-blue-50 p-2 rounded font-bold text-blue-800">PT/PN: ${summary.ptpn}</div>
-                            <div class="border border-orange-200 bg-orange-50 p-2 rounded font-bold text-orange-800">PP: ${summary.pp}</div>
-                        </div>
-
-                        <div class="mt-5 overflow-x-auto">
-                            <table class="w-full text-left text-sm border border-gray-300 border-collapse">
-                                <thead class="bg-gray-900 text-white">
-                                    <tr>
-                                        <th class="p-2 text-center w-12">#</th>
-                                        <th class="p-2">LPN</th>
-                                        <th class="p-2 text-center">Zone</th>
-                                        <th class="p-2 text-center">ประเภท</th>
-                                        <th class="p-2 text-center">สถานะ</th>
-                                        <th class="p-2 text-center">จำนวน</th>
-                                        <th class="p-2">รายละเอียด</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10 text-center text-sm print-break-inside-avoid">
-                            <div class="pt-10 border-t border-gray-500">ผู้จัดสินค้า / ผู้ตรวจสอบ</div>
-                            <div class="pt-10 border-t border-gray-500">หัวหน้างาน</div>
-                            <div class="pt-10 border-t border-gray-500">ผู้รับสินค้า</div>
+                        <div style="font-weight: bold; white-space: nowrap; margin-top: 4px;">
+                            <span>วันที่ออกเอกสาร</span>
+                            <span style="margin-left: 20px;">${escapeDocumentText(dateStr)}</span>
                         </div>
                     </div>
-                `;
-            });
 
-            content.innerHTML = htmlContent;
+                    <div class="overflow-x-auto">
+                        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-family: sans-serif; font-size: 13px;">
+                            <thead class="text-gray-900 font-bold text-center" style="border-bottom: 2px solid #000; background-color: #fff;">
+                                <tr>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 40px; text-align: center;">No</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 80px; text-align: center;">Owner</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">รหัสสาขา</th>
+                                    <th style="border: 1px solid #000; padding: 6px; text-align: center;">ชื่อสาขา</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">จังหวัด</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 70px; text-align: center;">กล่อง M</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">TOTE สีแดง</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">TOTE สีน้ำเงิน</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">TOTE สีเขียว</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">TOTE สีดำ</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 80px; text-align: center;">สีเหลือง</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 80px; text-align: center;">รวมกล่อง</th>
+                                    <th style="border: 1px solid #000; padding: 6px; width: 70px; text-align: center;">พาเลท</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                                ${totalRow}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 text-center text-xs md:text-sm print-break-inside-avoid">
+                        <div class="pt-8 border-t border-gray-400 font-bold">ผู้จัดสินค้า / ผู้ตรวจสอบ</div>
+                        <div class="pt-8 border-t border-gray-400 font-bold">หัวหน้างาน</div>
+                        <div class="pt-8 border-t border-gray-400 font-bold">ผู้รับสินค้า</div>
+                    </div>
+                </div>
+            `;
         }
 
         function printShippingDocument() {
@@ -1323,7 +1377,11 @@
             try {
                 const res = await fetch(backendApiUrl + `/api/check-wave?wave_no=${waveNo}`);
                 if (!res.ok) { showAlert('ข้อผิดพลาด', `ไม่พบข้อมูลรหัส Wave\n[${waveNo}]`); document.getElementById('waveInput').value = ''; return; }
-                const data = await res.json(); currentWave = data.wave_no; allLpnsInWave = data.lpn_list;
+                const data = await res.json(); 
+                currentWave = data.wave_no; 
+                allLpnsInWave = data.lpn_list;
+                currentBookingNo = data.booking_no || '';
+                currentLicensePlate = data.license_plate || '';
 
                 allLpnsInWave.forEach(i => { i.childCount = 0; i.combinedWith = null; i.isMaster = false; });
 
