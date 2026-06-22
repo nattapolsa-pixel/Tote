@@ -1094,101 +1094,194 @@
                 const province = getProvinceFromBranchName(branch.name);
 
                 return `
-                    <tr style="text-align: center; color: #000;">
-                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${index + 1}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; font-family: sans-serif;">${escapeDocumentText(owner)}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; font-family: sans-serif;">${escapeDocumentText(bCode)}</td>
-                        <td style="border: 1px solid #000; padding: 6px; text-align: left; font-family: sans-serif;">${escapeDocumentText(cleanBranchName)}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${escapeDocumentText(province)}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${mCount || ''}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${redCount || ''}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${blueCount || ''}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${greenCount || ''}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${blackCount || ''}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${yellowCount || ''}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; font-family: sans-serif;">${branchTotalBoxes}</td>
-                        <td style="border: 1px solid #000; padding: 6px; font-weight: bold; font-family: sans-serif;">${branchPallets}</td>
+                    <tr class="hover:bg-slate-50 transition-colors text-center text-slate-700">
+                        <td class="p-3 border-r border-slate-200 font-medium font-sans">${index + 1}</td>
+                        <td class="p-3 border-r border-slate-200 font-bold text-slate-900 font-sans">${escapeDocumentText(owner)}</td>
+                        <td class="p-3 border-r border-slate-200 font-bold text-indigo-600 tracking-wider font-sans">${escapeDocumentText(bCode)}</td>
+                        <td class="p-3 border-r border-slate-200 text-left font-medium font-sans">${escapeDocumentText(cleanBranchName)}</td>
+                        <td class="p-3 border-r border-slate-200 text-slate-600 font-sans">${escapeDocumentText(province)}</td>
+                        <td class="p-3 border-r border-slate-200 font-bold font-sans">${mCount || ''}</td>
+                        <td class="p-3 border-r border-slate-200 text-red-600 font-bold font-sans">${redCount || ''}</td>
+                        <td class="p-3 border-r border-slate-200 text-blue-600 font-bold font-sans">${blueCount || ''}</td>
+                        <td class="p-3 border-r border-slate-200 text-green-600 font-bold font-sans">${greenCount || ''}</td>
+                        <td class="p-3 border-r border-slate-200 text-slate-800 font-bold font-sans">${blackCount || ''}</td>
+                        <td class="p-3 border-r border-slate-200 text-yellow-600 font-bold font-sans">${yellowCount || ''}</td>
+                        <td class="p-3 border-r border-slate-200 bg-slate-50/50 font-black text-slate-900 font-sans">${branchTotalBoxes}</td>
+                        <td class="p-3 font-black bg-slate-50/50 text-indigo-900 font-sans">${branchPallets}</td>
                     </tr>
                 `;
             }).join('');
 
             const totalRow = `
-                <tr style="text-align: center; font-weight: bold; background-color: #c0c0c0; color: #000;">
-                    <td colspan="5" style="border: 1px solid #000; padding: 6px; text-align: center; font-family: sans-serif;">รวมจำนวนกล่อง/พาเลท</td>
-                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalM}</td>
-                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalRed}</td>
-                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalBlue}</td>
-                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalGreen}</td>
-                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalBlack}</td>
-                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalYellow}</td>
-                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalAllBoxes}</td>
-                    <td style="border: 1px solid #000; padding: 6px; font-family: sans-serif;">${totalPallets}</td>
+                <tr class="bg-slate-100 text-center font-black text-slate-900 border-t-2 border-slate-300">
+                    <td colspan="5" class="p-3 border-r border-slate-200 text-center text-slate-600 font-sans">รวมจำนวนกล่อง/พาเลท</td>
+                    <td class="p-3 border-r border-slate-200 text-slate-900 font-sans">${totalM}</td>
+                    <td class="p-3 border-r border-slate-200 text-red-700 font-sans">${totalRed}</td>
+                    <td class="p-3 border-r border-slate-200 text-blue-700 font-sans">${totalBlue}</td>
+                    <td class="p-3 border-r border-slate-200 text-green-700 font-sans">${totalGreen}</td>
+                    <td class="p-3 border-r border-slate-200 text-slate-900 font-sans">${totalBlack}</td>
+                    <td class="p-3 border-r border-slate-200 text-yellow-700 font-sans">${totalYellow}</td>
+                    <td class="p-3 border-r border-slate-200 bg-slate-200 text-slate-950 font-sans">${totalAllBoxes}</td>
+                    <td class="p-3 bg-slate-200 text-indigo-950 font-sans">${totalPallets}</td>
                 </tr>
             `;
 
+            // Calculate LPN details list grouped by branch
+            const branchesOptions = branches.map(branch => {
+                const cleanName = branch.name.replace(/\s*\([^)]+\)\s*/g, '').trim();
+                return `<option value="${branch.code}">${branch.code} - ${cleanName}</option>`;
+            }).join('');
+
+            const lpnDetailsHtml = branches.map(branch => {
+                const bCode = branch.code;
+                const branchItems = allLpnsInWave.filter(item => (item.branch || 'Unknown') === bCode);
+
+                const itemRows = branchItems.map((item, index) => {
+                    const lpnPrefix = item.lpn.substring(0, 2);
+                    let typeBadge = '';
+                    if (lpnPrefix === 'PR') {
+                        typeBadge = '<span class="px-2 py-0.5 rounded bg-red-50 text-red-700 font-bold border border-red-200 text-xs">PR (Carton)</span>';
+                    } else if (lpnPrefix === 'PP') {
+                        typeBadge = '<span class="px-2 py-0.5 rounded bg-orange-50 text-orange-700 font-bold border border-orange-200 text-xs">PP (Pallet)</span>';
+                    } else {
+                        typeBadge = '<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-200 text-xs">PT/PN (Tote)</span>';
+                    }
+
+                    return `
+                        <tr class="hover:bg-slate-50 transition-colors text-center text-slate-700 text-xs">
+                            <td class="p-2 border-r border-slate-100 font-sans">${index + 1}</td>
+                            <td class="p-2 border-r border-slate-100 font-black text-slate-900 font-sans tracking-wider">${escapeDocumentText(item.lpn)}</td>
+                            <td class="p-2 border-r border-slate-100 font-sans">${escapeDocumentText(item.zone)}</td>
+                            <td class="p-2 border-r border-slate-100 font-sans">${typeBadge}</td>
+                            <td class="p-2 border-r border-slate-100 font-sans">${getStatusBadge(item)}</td>
+                            <td class="p-2 border-r border-slate-100 font-black text-slate-800 font-sans">${getActualQty(item)}</td>
+                            <td class="p-2 text-left text-slate-500 font-sans">${escapeDocumentText(getDocumentDetail(item, branchItems))}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const cleanBranchName = branch.name.replace(/\s*\([^)]+\)\s*/g, '').trim();
+
+                return `
+                    <div class="lpn-detail-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-4 print-break-inside-avoid" data-branch="${bCode}">
+                        <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
+                            <div class="font-black text-slate-800 text-sm">
+                                <span class="text-indigo-600 font-sans mr-2">[${bCode}]</span>
+                                <span class="font-sans text-xs md:text-sm">${escapeDocumentText(cleanBranchName)}</span>
+                            </div>
+                            <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-bold font-sans">${branchItems.length} LPNs</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-center">
+                                    <tr>
+                                        <th class="p-2 border-r border-slate-200 w-10">No</th>
+                                        <th class="p-2 border-r border-slate-200 w-32">LPN Code</th>
+                                        <th class="p-2 border-r border-slate-200 w-16">Zone</th>
+                                        <th class="p-2 border-r border-slate-200 w-28">Type</th>
+                                        <th class="p-2 border-r border-slate-200 w-24">Status</th>
+                                        <th class="p-2 border-r border-slate-200 w-16">Qty</th>
+                                        <th class="p-2">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-150">
+                                    ${itemRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
             content.innerHTML = `
-                <div class="branch-document-sheet bg-white p-4 md:p-8 shadow border border-gray-300 rounded-lg flex flex-col gap-6" style="background-color: #ffffff;">
-                    <div class="text-center">
-                        <h1 class="text-xl md:text-2xl font-black text-gray-900 tracking-wide" style="font-family: sans-serif; color: #000; margin-bottom: 20px;">Transport Job (เอกสารใบรายการคุมส่งสินค้า)</h1>
+                <div class="branch-document-sheet bg-white p-6 md:p-8 shadow-xl border border-slate-200 rounded-xl flex flex-col gap-6" style="background-color: #ffffff; font-family: 'Inter', sans-serif;">
+
+                    <!-- Title Section -->
+                    <div class="text-center pb-4 border-b border-slate-100">
+                        <h1 class="text-2xl md:text-3xl font-black text-slate-800 tracking-wide">Transport Job</h1>
+                        <p class="text-xs md:text-sm text-slate-500 font-bold mt-1">เอกสารใบรายการคุมส่งสินค้า (Shipping Document Summary)</p>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; font-family: sans-serif; font-size: 14px; color: #000; margin-bottom: 12px; line-height: 1.6;">
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <div>
-                                <span style="font-weight: bold; display: inline-block; width: 100px;">Booking :</span>
-                                <span style="font-weight: bold; display: inline-block; min-width: 120px;">${escapeDocumentText(currentBookingNo || 'B001-0000000')}</span>
-                                <span style="color: #ff0000; font-weight: normal; margin-left: 20px;">&lt;&lt; ข้อมูลจาก wave monitoring</span>
-                            </div>
-                            <div>
-                                <span style="font-weight: bold; display: inline-block; width: 100px;">Wave :</span>
-                                <span style="font-weight: bold; display: inline-block; min-width: 120px;">${escapeDocumentText(currentWave || '0000000000')}</span>
-                                <span style="color: #ff0000; font-weight: normal; margin-left: 20px;">&lt;&lt; ข้อมูลจาก wave monitoring</span>
-                            </div>
-                            <div>
-                                <span style="font-weight: bold; display: inline-block; width: 100px;">ทะเบียนรถ :</span>
-                                <span style="font-weight: bold; display: inline-block; min-width: 120px;">${escapeDocumentText(currentLicensePlate || '-')}</span>
-                                <span style="color: #ff0000; font-weight: normal; margin-left: 20px;">&lt;&lt; ข้อมูลจาก wave monitoring</span>
-                            </div>
+                    <!-- Metadata Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">Booking No.</span>
+                            <span class="text-slate-800 font-black text-base">${escapeDocumentText(currentBookingNo || '-')}</span>
                         </div>
-                        <div style="font-weight: bold; white-space: nowrap; margin-top: 4px;">
-                            <span>วันที่ออกเอกสาร</span>
-                            <span style="margin-left: 20px;">${escapeDocumentText(dateStr)}</span>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">Wave No.</span>
+                            <span class="text-slate-800 font-black text-base">${escapeDocumentText(currentWave || '0000000000')}</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">ทะเบียนรถ (License Plate)</span>
+                            <span class="text-slate-800 font-black text-base">${escapeDocumentText(currentLicensePlate || '-')}</span>
+                        </div>
+                        <div class="flex flex-col gap-1 md:items-end">
+                            <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">วันที่ออกเอกสาร</span>
+                            <span class="text-slate-800 font-black text-base">${escapeDocumentText(dateStr)}</span>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-family: sans-serif; font-size: 13px;">
-                            <thead class="text-gray-900 font-bold text-center" style="border-bottom: 2px solid #000; background-color: #fff;">
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="bg-slate-800 text-white font-bold text-center">
                                 <tr>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 40px; text-align: center;">No</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 80px; text-align: center;">Owner</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">รหัสสาขา</th>
-                                    <th style="border: 1px solid #000; padding: 6px; text-align: center;">ชื่อสาขา</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">จังหวัด</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 70px; text-align: center;">กล่อง M</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">TOTE สีแดง</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">TOTE สีน้ำเงิน</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">TOTE สีเขียว</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 90px; text-align: center;">TOTE สีดำ</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 80px; text-align: center;">สีเหลือง</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 80px; text-align: center;">รวมกล่อง</th>
-                                    <th style="border: 1px solid #000; padding: 6px; width: 70px; text-align: center;">พาเลท</th>
+                                    <th class="p-3 border-r border-slate-700 w-12 text-center font-sans">No</th>
+                                    <th class="p-3 border-r border-slate-700 w-24 text-center font-sans">Owner</th>
+                                    <th class="p-3 border-r border-slate-700 w-28 text-center font-sans">รหัสสาขา</th>
+                                    <th class="p-3 border-r border-slate-700 text-left font-sans">ชื่อสาขา</th>
+                                    <th class="p-3 border-r border-slate-700 w-28 text-center font-sans">จังหวัด</th>
+                                    <th class="p-3 border-r border-slate-700 w-20 text-center font-sans">กล่อง M</th>
+                                    <th class="p-3 border-r border-slate-700 w-24 text-center font-sans text-red-300">TOTE แดง</th>
+                                    <th class="p-3 border-r border-slate-700 w-24 text-center font-sans text-blue-300">TOTE น้ำเงิน</th>
+                                    <th class="p-3 border-r border-slate-700 w-24 text-center font-sans text-green-300">TOTE เขียว</th>
+                                    <th class="p-3 border-r border-slate-700 w-24 text-center font-sans text-slate-300">TOTE ดำ</th>
+                                    <th class="p-3 border-r border-slate-700 w-24 text-center font-sans text-yellow-300">สีเหลือง</th>
+                                    <th class="p-3 border-r border-slate-700 w-24 text-center bg-slate-700 font-sans">รวมกล่อง</th>
+                                    <th class="p-3 w-20 text-center bg-slate-700 text-indigo-200 font-sans">พาเลท</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-slate-200">
                                 ${rows}
                                 ${totalRow}
                             </tbody>
                         </table>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 text-center text-xs md:text-sm print-break-inside-avoid">
-                        <div class="pt-8 border-t border-gray-400 font-bold">ผู้จัดสินค้า / ผู้ตรวจสอบ</div>
-                        <div class="pt-8 border-t border-gray-400 font-bold">หัวหน้างาน</div>
-                        <div class="pt-8 border-t border-gray-400 font-bold">ผู้รับสินค้า</div>
+                    <!-- LPN Details Section -->
+                    <div class="mt-8 border-t border-slate-200 pt-6">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                            <div class="min-w-0 flex-1">
+                                <h2 class="text-lg font-black text-slate-800 font-sans">รายละเอียดกล่อง LPN รายสาขา (LPN Barcode Details)</h2>
+                                <p class="text-xs text-slate-400 font-bold mt-0.5 font-sans">* ตรวจสอบรายละเอียดและสถานะความถูกต้องของบาร์โค้ด LPN รายสาขา</p>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0 no-print">
+                                <label for="branchFilter" class="text-xs font-bold text-slate-500 whitespace-nowrap font-sans">เลือกดูเฉพาะสาขา:</label>
+                                <select id="branchFilter" onchange="filterBranchLpns()" class="bg-white border border-slate-300 text-slate-750 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 font-bold font-sans">
+                                    <option value="ALL">แสดงทุกสาขา (Show All)</option>
+                                    ${branchesOptions}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            ${lpnDetailsHtml}
+                        </div>
                     </div>
                 </div>
             `;
+        }
+
+        function filterBranchLpns() {
+            const filterVal = document.getElementById('branchFilter').value;
+            const cards = document.querySelectorAll('.lpn-detail-card');
+            cards.forEach(card => {
+                const cardBranch = card.getAttribute('data-branch');
+                if (filterVal === 'ALL' || cardBranch === filterVal) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
 
         function printShippingDocument() {
@@ -1380,8 +1473,8 @@
                 const data = await res.json(); 
                 currentWave = data.wave_no; 
                 allLpnsInWave = data.lpn_list;
-                currentBookingNo = data.booking_no || '';
-                currentLicensePlate = data.license_plate || '';
+                currentBookingNo = data.booking_no ? String(data.booking_no).trim() : '';
+                currentLicensePlate = data.license_plate ? String(data.license_plate).trim() : '';
 
                 allLpnsInWave.forEach(i => { i.childCount = 0; i.combinedWith = null; i.isMaster = false; });
 

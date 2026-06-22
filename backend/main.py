@@ -86,6 +86,7 @@ async def check_wave(wave_no: str):
         FROM `pro-analytics-db.logistics_db.wave_lpn_detail_record` AS d
         LEFT JOIN `pro-analytics-db.logistics_db.wave_monitoring` AS m 
           ON TRIM(CAST(d.Branch_Code AS STRING)) = TRIM(CAST(m.Branch_Code AS STRING))
+         AND SAFE_CAST(REGEXP_REPLACE(TRIM(CAST(m.Wave_Number AS STRING)), r'[^0-9]', '') AS INT64) = SAFE_CAST(d.Wave_Number AS INT64)
         LEFT JOIN ScanHistory AS s
           ON SAFE_CAST(d.Wave_Number AS INT64) = s.Wave_ID 
          AND TRIM(UPPER(d.LPN)) = s.Clean_LPN
@@ -98,7 +99,7 @@ async def check_wave(wave_no: str):
             COALESCE(MAX(TRIM(CAST(Vehicle_Booking_No AS STRING))), '') AS booking_no,
             COALESCE(MAX(TRIM(CAST(License_Plate AS STRING))), '') AS license_plate
         FROM `pro-analytics-db.logistics_db.wave_monitoring`
-        WHERE SAFE_CAST(REGEXP_REPLACE(Wave_Number, r'[^0-9]', '') AS INT64) = {search_wave_id}
+        WHERE SAFE_CAST(REGEXP_REPLACE(TRIM(CAST(Wave_Number AS STRING)), r'[^0-9]', '') AS INT64) = {search_wave_id}
     """
 
     try:
