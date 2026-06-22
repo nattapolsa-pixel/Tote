@@ -1,0 +1,11 @@
+﻿node_modules/
+__pycache__/
+.venv/
+venv/
+.env
+*.log
+.DS_Store
+
+# Local Google service account key. Keep this local only.
+backend/bq-key.json
+bq-key.json
